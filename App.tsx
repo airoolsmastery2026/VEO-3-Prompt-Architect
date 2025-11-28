@@ -1,8 +1,9 @@
+
 import React, { useState } from 'react';
 import { SetupForm } from './components/SetupForm';
 import { SceneCard } from './components/SceneCard';
 import { ExportModal } from './components/ExportModal';
-import { generateStoryboard, regenerateScene } from './services/geminiService';
+import { generateStoryboard, regenerateScene, generateScript } from './services/geminiService';
 import { DEFAULT_BIBLE, DEFAULT_SETTINGS } from './constants';
 import { ProjectSettings, CharacterBible, SceneData, FullProjectData } from './types';
 import { Film, Download, Trash2, Plus } from 'lucide-react';
@@ -12,8 +13,21 @@ const App: React.FC = () => {
   const [bible, setBible] = useState<CharacterBible>(DEFAULT_BIBLE);
   const [scenes, setScenes] = useState<SceneData[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isWritingScript, setIsWritingScript] = useState(false);
   const [regeneratingIds, setRegeneratingIds] = useState<Set<string>>(new Set());
   const [showExport, setShowExport] = useState(false);
+
+  const handleGenerateScript = async () => {
+    setIsWritingScript(true);
+    try {
+        const script = await generateScript(settings, bible);
+        setSettings(prev => ({ ...prev, script }));
+    } catch (error) {
+        alert("Failed to write script. Please check API key and try again.");
+    } finally {
+        setIsWritingScript(false);
+    }
+  };
 
   const handleGenerate = async () => {
     setIsGenerating(true);
@@ -120,7 +134,9 @@ const App: React.FC = () => {
             bible={bible} 
             setBible={setBible}
             onGenerate={handleGenerate}
+            onGenerateScript={handleGenerateScript}
             isGenerating={isGenerating}
+            isWritingScript={isWritingScript}
           />
         </section>
 

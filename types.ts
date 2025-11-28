@@ -1,3 +1,4 @@
+
 export enum AspectRatio {
   Ratio_16_9 = "16:9",
   Ratio_9_16 = "9:16"
@@ -9,7 +10,12 @@ export enum CinematicStyle {
   Realistic = "Realistic",
   Cyberpunk = "Cyberpunk",
   Vintage = "Vintage Film",
-  Documentary = "Documentary"
+  Documentary = "Documentary",
+  SciFi = "Sci-Fi Adventure",
+  Fantasy = "Fantasy",
+  Horror = "Horror",
+  Noir = "Film Noir",
+  Western = "Western"
 }
 
 export interface CharacterBible {
@@ -20,6 +26,7 @@ export interface CharacterBible {
 export interface ProjectSettings {
   context: string;
   videoIdea: string;
+  script: string; // New field for the full story
   style: CinematicStyle;
   ratio: AspectRatio;
   sceneCount: number;

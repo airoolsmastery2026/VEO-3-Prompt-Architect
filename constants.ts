@@ -1,3 +1,4 @@
+
 import { CharacterBible, ProjectSettings, AspectRatio, CinematicStyle } from './types';
 
 export const DEFAULT_BIBLE: CharacterBible = {
@@ -10,9 +11,10 @@ Sophia, nhà khoa học trẻ về biển khoảng cuối hai mươi tuổi, tó
 };
 
 export const DEFAULT_SETTINGS: ProjectSettings = {
-  context: "Deep ocean exploration inside the steampunk submarine Nautilus, featuring advanced yet vintage brass technology and dim, atmospheric lighting.",
-  videoIdea: "Captain Nemo discovers an ancient glowing artifact hidden in a craggy, bioluminescent coral reef. Sophia analyzes it, realizing it's sending a signal. A moment of tense discovery.",
-  style: CinematicStyle.Cinematic,
+  context: "Sâu dưới Thái Bình Dương, bên trong tàu ngầm Nautilus công nghệ hơi nước cổ điển nhưng tiên tiến, với ánh sáng tối, mờ ảo và chi tiết kim loại đồng.",
+  videoIdea: "Khám phá một cổ vật phát sáng bị lãng quên dưới đáy biển sâu, dẫn đến một khoảnh khắc đối đầu căng thẳng và kịch tính.",
+  script: "", 
+  style: CinematicStyle.SciFi,
   ratio: AspectRatio.Ratio_16_9,
   sceneCount: 3
 };
