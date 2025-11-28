@@ -1,9 +1,10 @@
+
 import React, { useState } from 'react';
 import { SetupForm } from './components/SetupForm';
 import { SceneCard } from './components/SceneCard';
 import { ExportModal } from './components/ExportModal';
-import { generateStoryboard, regenerateScene, generateScript } from './services/geminiService';
-import { DEFAULT_BIBLE, DEFAULT_SETTINGS } from './constants';
+import { generateStoryboard, regenerateScene, generateScript, suggestTitle, suggestContext, suggestIdea } from './services/geminiService';
+import { DEFAULT_BIBLE, DEFAULT_SETTINGS, TOY_PROJECT_DATA } from './constants';
 import { ProjectSettings, CharacterBible, SceneData, FullProjectData } from './types';
 import { Film, Download, Trash2, Plus } from 'lucide-react';
 
@@ -13,8 +14,43 @@ const App: React.FC = () => {
   const [scenes, setScenes] = useState<SceneData[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isWritingScript, setIsWritingScript] = useState(false);
+  
+  // Loading states for suggestions
+  const [loadingSuggestions, setLoadingSuggestions] = useState({
+    title: false,
+    context: false,
+    idea: false
+  });
+
   const [regeneratingIds, setRegeneratingIds] = useState<Set<string>>(new Set());
   const [showExport, setShowExport] = useState(false);
+
+  const handleSuggestTitle = async () => {
+    setLoadingSuggestions(prev => ({ ...prev, title: true }));
+    try {
+        const title = await suggestTitle(settings);
+        setSettings(prev => ({ ...prev, title }));
+    } catch(e) { console.error(e); } 
+    finally { setLoadingSuggestions(prev => ({ ...prev, title: false })); }
+  };
+
+  const handleSuggestContext = async () => {
+    setLoadingSuggestions(prev => ({ ...prev, context: true }));
+    try {
+        const context = await suggestContext(settings.style);
+        setSettings(prev => ({ ...prev, context }));
+    } catch(e) { console.error(e); } 
+    finally { setLoadingSuggestions(prev => ({ ...prev, context: false })); }
+  };
+
+  const handleSuggestIdea = async () => {
+    setLoadingSuggestions(prev => ({ ...prev, idea: true }));
+    try {
+        const videoIdea = await suggestIdea(settings);
+        setSettings(prev => ({ ...prev, videoIdea }));
+    } catch(e) { console.error(e); } 
+    finally { setLoadingSuggestions(prev => ({ ...prev, idea: false })); }
+  };
 
   const handleGenerateScript = async () => {
     setIsWritingScript(true);
@@ -88,7 +124,15 @@ const App: React.FC = () => {
     if(confirm("Are you sure you want to delete all scenes?")) {
         setScenes([]);
     }
-  }
+  };
+
+  const handleLoadToyPreset = () => {
+      if(confirm("Load the 'Toy Story' preset? This will overwrite current settings.")) {
+          setSettings(TOY_PROJECT_DATA.settings);
+          setBible(TOY_PROJECT_DATA.characterBible);
+          setScenes(TOY_PROJECT_DATA.scenes);
+      }
+  };
 
   const handleImport = (data: FullProjectData) => {
     setSettings(data.settings);
@@ -135,6 +179,11 @@ const App: React.FC = () => {
             setBible={setBible}
             onGenerate={handleGenerate}
             onGenerateScript={handleGenerateScript}
+            onSuggestTitle={handleSuggestTitle}
+            onSuggestContext={handleSuggestContext}
+            onSuggestIdea={handleSuggestIdea}
+            onLoadToyPreset={handleLoadToyPreset}
+            loadingStates={loadingSuggestions}
             isGenerating={isGenerating}
             isWritingScript={isWritingScript}
           />

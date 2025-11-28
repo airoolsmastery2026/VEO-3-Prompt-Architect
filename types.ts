@@ -15,7 +15,8 @@ export enum CinematicStyle {
   Fantasy = "Fantasy",
   Horror = "Horror",
   Noir = "Film Noir",
-  Western = "Western"
+  Western = "Western",
+  StopMotion = "Stop Motion / Toy"
 }
 
 export interface CharacterBible {
@@ -24,9 +25,10 @@ export interface CharacterBible {
 }
 
 export interface ProjectSettings {
+  title: string; // New field
   context: string;
   videoIdea: string;
-  script: string; // New field for the full story
+  script: string; 
   style: CinematicStyle;
   ratio: AspectRatio;
   sceneCount: number;
@@ -40,8 +42,8 @@ export interface SceneData {
   camera: string;
   action: string;
   lighting: string;
-  transition?: string; // New field for transition type
-  dialogue?: string; // Optional, < 8s
+  transition?: string; 
+  dialogue?: string; 
 }
 
 export interface FullProjectData {

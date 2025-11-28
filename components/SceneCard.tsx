@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { SceneData, CharacterBible, AspectRatio } from '../types';
-import { Copy, RefreshCw, Trash2, Edit3, Save, Video, Globe } from 'lucide-react';
+import { Copy, RefreshCw, Trash2, Edit3, Save, Video, Send, CheckCircle2 } from 'lucide-react';
 
 interface SceneCardProps {
   scene: SceneData;
@@ -11,6 +11,16 @@ interface SceneCardProps {
   onRegenerate: (id: string, sceneNumber: number) => void;
   isRegenerating: boolean;
 }
+
+const TRANSITION_OPTIONS = [
+  'Cut To',
+  'Fade In',
+  'Fade Out',
+  'Dissolve',
+  'Wipe Left',
+  'Wipe Right',
+  'Cross Dissolve'
+];
 
 export const SceneCard: React.FC<SceneCardProps> = ({
   scene,
@@ -24,6 +34,7 @@ export const SceneCard: React.FC<SceneCardProps> = ({
   const [isEditing, setIsEditing] = useState(false);
   const [localScene, setLocalScene] = useState<SceneData>(scene);
   const [activeTab, setActiveTab] = useState<'en' | 'vi'>('en');
+  const [pushStatus, setPushStatus] = useState<'idle' | 'sent'>('idle');
 
   // Sync props to state if not editing
   React.useEffect(() => {
@@ -39,7 +50,6 @@ export const SceneCard: React.FC<SceneCardProps> = ({
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    // Could add a toast here
   };
 
   // Construct the full prompt dynamically
@@ -62,6 +72,35 @@ Camera: ${localScene.camera}
 Lighting: ${localScene.lighting}
 Transition: ${localScene.transition || 'Cut To'}
 Ratio: ${ratio}`;
+
+  const handlePushToExtension = () => {
+    const payload = {
+        source: 'VEO3_ARCHITECT',
+        type: 'VEO3_DATA_PUSH',
+        timestamp: Date.now(),
+        data: {
+            sceneId: scene.id,
+            sceneNumber: scene.number,
+            language: activeTab,
+            prompt: fullPrompt,
+            ratio: ratio,
+            rawScene: localScene
+        }
+    };
+
+    // Method 1: Window PostMessage (Standard for Content Scripts)
+    window.postMessage(payload, "*");
+
+    // Method 2: Custom DOM Event (Alternative for strict isolation)
+    const event = new CustomEvent('VEO3_PROMPT_READY', { detail: payload });
+    document.dispatchEvent(event);
+
+    // Visual Feedback
+    setPushStatus('sent');
+    setTimeout(() => setPushStatus('idle'), 2000);
+    
+    console.log("VEO 3 Data Pushed:", payload);
+  };
 
   return (
     <div className="bg-cinema-800 border border-cinema-700 rounded-xl overflow-hidden shadow-md flex flex-col">
@@ -120,14 +159,26 @@ Ratio: ${ratio}`;
                 <Video className="w-3 h-3 mr-1" /> Visual / Mô tả hình ảnh
             </label>
             {isEditing ? (
-                <textarea 
-                    value={activeTab === 'en' ? localScene.descriptionEn : localScene.descriptionVi}
-                    onChange={(e) => {
-                        if (activeTab === 'en') setLocalScene({...localScene, descriptionEn: e.target.value});
-                        else setLocalScene({...localScene, descriptionVi: e.target.value});
-                    }}
-                    className="w-full bg-cinema-900 border border-cinema-700 rounded p-2 text-sm text-slate-200 outline-none focus:border-cinema-500 h-28"
-                />
+                <div className="space-y-3">
+                    <div className="space-y-1">
+                        <span className="text-[10px] text-slate-500 font-bold uppercase">English Description</span>
+                        <textarea 
+                            value={localScene.descriptionEn}
+                            onChange={(e) => setLocalScene({...localScene, descriptionEn: e.target.value})}
+                            className="w-full bg-cinema-900 border border-cinema-700 rounded p-2 text-sm text-slate-200 outline-none focus:border-cinema-500 h-24"
+                            placeholder="English visual description..."
+                        />
+                    </div>
+                    <div className="space-y-1">
+                         <span className="text-[10px] text-slate-500 font-bold uppercase">Vietnamese Description</span>
+                        <textarea 
+                            value={localScene.descriptionVi}
+                            onChange={(e) => setLocalScene({...localScene, descriptionVi: e.target.value})}
+                            className="w-full bg-cinema-900 border border-cinema-700 rounded p-2 text-sm text-slate-200 outline-none focus:border-cinema-500 h-24"
+                            placeholder="Mô tả hình ảnh tiếng Việt..."
+                        />
+                    </div>
+                </div>
             ) : (
                 <p className="text-sm text-slate-300 leading-relaxed">
                     {activeTab === 'en' ? localScene.descriptionEn : localScene.descriptionVi}
@@ -164,12 +215,15 @@ Ratio: ${ratio}`;
              <div>
                 <label className="text-[10px] text-slate-500 font-bold uppercase mb-1">Transition</label>
                 {isEditing ? (
-                    <input 
-                        value={localScene.transition || ''}
-                        placeholder="Cut to"
+                    <select
+                        value={localScene.transition || 'Cut To'}
                         onChange={(e) => setLocalScene({...localScene, transition: e.target.value})}
-                        className="w-full bg-cinema-900 border border-cinema-700 rounded px-2 py-1 text-xs text-slate-300"
-                    />
+                        className="w-full bg-cinema-900 border border-cinema-700 rounded px-2 py-1 text-xs text-slate-300 outline-none"
+                    >
+                      {TRANSITION_OPTIONS.map((opt) => (
+                        <option key={opt} value={opt}>{opt}</option>
+                      ))}
+                    </select>
                  ) : (
                     <p className="text-xs text-cinema-400">{localScene.transition || 'Cut To'}</p>
                  )}
@@ -206,13 +260,23 @@ Ratio: ${ratio}`;
         <div className="pt-2 border-t border-cinema-700">
             <div className="flex justify-between items-end mb-1">
                 <label className="text-[10px] text-cinema-500 font-bold uppercase">Final VEO 3 Prompt ({activeTab.toUpperCase()})</label>
-                <button 
-                    onClick={() => copyToClipboard(fullPrompt)}
-                    className="flex items-center space-x-1 text-[10px] bg-cinema-700 hover:bg-cinema-600 text-white px-2 py-1 rounded transition"
-                >
-                    <Copy className="w-3 h-3" />
-                    <span>Copy</span>
-                </button>
+                <div className="flex space-x-2">
+                    <button 
+                        onClick={handlePushToExtension}
+                        className={`flex items-center space-x-1 text-[10px] px-2 py-1 rounded transition border ${pushStatus === 'sent' ? 'bg-green-600 border-green-500 text-white' : 'bg-transparent border-cinema-600 text-cinema-400 hover:text-white hover:border-cinema-400'}`}
+                        title="Push Prompt to Browser Extension"
+                    >
+                        {pushStatus === 'sent' ? <CheckCircle2 className="w-3 h-3" /> : <Send className="w-3 h-3" />}
+                        <span>{pushStatus === 'sent' ? 'Sent!' : 'Push to Ext'}</span>
+                    </button>
+                    <button 
+                        onClick={() => copyToClipboard(fullPrompt)}
+                        className="flex items-center space-x-1 text-[10px] bg-cinema-700 hover:bg-cinema-600 text-white px-2 py-1 rounded transition"
+                    >
+                        <Copy className="w-3 h-3" />
+                        <span>Copy</span>
+                    </button>
+                </div>
             </div>
             <div className="relative group">
                 <textarea 
