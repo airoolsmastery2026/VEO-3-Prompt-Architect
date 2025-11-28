@@ -14,9 +14,10 @@ const SCENE_SCHEMA: Schema = {
       camera: { type: Type.STRING, description: "Camera angle, movement instructions, and shot type (e.g. Close-up, Wide shot, Dolly Zoom)" },
       lighting: { type: Type.STRING, description: "Lighting setup instructions (e.g. Cinematic, Volumetric, Natural, Chiaroscuro)" },
       action: { type: Type.STRING, description: "Specific character actions and movement relevant for an 8-second clip." },
+      transition: { type: Type.STRING, description: "Transition type from previous scene (e.g. Cut To, Fade In, Dissolve)." },
       dialogue: { type: Type.STRING, description: "Short dialogue if applicable, kept under 8 seconds. Can be empty." },
     },
-    required: ["number", "descriptionEn", "descriptionVi", "camera", "lighting", "action"]
+    required: ["number", "descriptionEn", "descriptionVi", "camera", "lighting", "action", "transition"]
   }
 };
 
@@ -96,6 +97,7 @@ export const generateStoryboard = async (
     - camera: Technical camera movement (e.g., "Slow push-in," "Handheld tracking," "Drone shot").
     - lighting: Mood and lighting setup (e.g., "Bioluminescent glow," "Harsh shadows").
     - action: Specific movement occurring within the 8s timeframe.
+    - transition: Edit transition from previous shot (e.g., "Cut to", "Dissolve", "Wipe", "Fade In").
     - dialogue: OPTIONAL. Must be spoken within 3-4 seconds max.
   `;
 
@@ -157,9 +159,10 @@ export const regenerateScene = async (
       camera: { type: Type.STRING },
       lighting: { type: Type.STRING },
       action: { type: Type.STRING },
+      transition: { type: Type.STRING },
       dialogue: { type: Type.STRING },
     },
-    required: ["number", "descriptionEn", "descriptionVi", "camera", "lighting", "action"]
+    required: ["number", "descriptionEn", "descriptionVi", "camera", "lighting", "action", "transition"]
   };
 
   try {

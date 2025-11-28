@@ -52,6 +52,7 @@ export const SceneCard: React.FC<SceneCardProps> = ({
   // [Visual Description]
   // Camera: ...
   // Lighting: ...
+  // Transition: ...
   // Ratio: ...
   const fullPrompt = `${bibleText.trim()}
 
@@ -59,6 +60,7 @@ ${descriptionText.trim()}
 ${localScene.dialogue ? `Dialogue: "${localScene.dialogue}"` : ''}
 Camera: ${localScene.camera}
 Lighting: ${localScene.lighting}
+Transition: ${localScene.transition || 'Cut To'}
 Ratio: ${ratio}`;
 
   return (
@@ -134,9 +136,9 @@ Ratio: ${ratio}`;
         </div>
 
         {/* Technical Details Grid */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-3 gap-3">
              <div>
-                <label className="text-[10px] text-slate-500 font-bold uppercase mb-1">Camera / Góc máy</label>
+                <label className="text-[10px] text-slate-500 font-bold uppercase mb-1">Camera</label>
                  {isEditing ? (
                     <input 
                         value={localScene.camera}
@@ -148,7 +150,7 @@ Ratio: ${ratio}`;
                  )}
              </div>
              <div>
-                <label className="text-[10px] text-slate-500 font-bold uppercase mb-1">Lighting / Ánh sáng</label>
+                <label className="text-[10px] text-slate-500 font-bold uppercase mb-1">Lighting</label>
                 {isEditing ? (
                     <input 
                         value={localScene.lighting}
@@ -157,6 +159,19 @@ Ratio: ${ratio}`;
                     />
                  ) : (
                     <p className="text-xs text-cinema-400">{localScene.lighting}</p>
+                 )}
+             </div>
+             <div>
+                <label className="text-[10px] text-slate-500 font-bold uppercase mb-1">Transition</label>
+                {isEditing ? (
+                    <input 
+                        value={localScene.transition || ''}
+                        placeholder="Cut to"
+                        onChange={(e) => setLocalScene({...localScene, transition: e.target.value})}
+                        className="w-full bg-cinema-900 border border-cinema-700 rounded px-2 py-1 text-xs text-slate-300"
+                    />
+                 ) : (
+                    <p className="text-xs text-cinema-400">{localScene.transition || 'Cut To'}</p>
                  )}
              </div>
         </div>

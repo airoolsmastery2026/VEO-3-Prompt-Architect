@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { SetupForm } from './components/SetupForm';
 import { SceneCard } from './components/SceneCard';
@@ -79,7 +78,8 @@ const App: React.FC = () => {
         descriptionVi: "Cảnh mới...",
         action: "Enter action...",
         camera: "Wide shot",
-        lighting: "Natural light"
+        lighting: "Natural light",
+        transition: "Cut to"
     };
     setScenes(prev => [...prev, newScene]);
   };

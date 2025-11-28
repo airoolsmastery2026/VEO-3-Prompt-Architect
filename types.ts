@@ -40,6 +40,7 @@ export interface SceneData {
   camera: string;
   action: string;
   lighting: string;
+  transition?: string; // New field for transition type
   dialogue?: string; // Optional, < 8s
 }
 
