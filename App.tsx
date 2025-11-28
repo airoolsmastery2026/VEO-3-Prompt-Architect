@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { SetupForm } from './components/SetupForm';
 import { SceneCard } from './components/SceneCard';
@@ -6,7 +5,7 @@ import { ExportModal } from './components/ExportModal';
 import { generateStoryboard, regenerateScene, generateScript, suggestTitle, suggestContext, suggestIdea } from './services/geminiService';
 import { DEFAULT_BIBLE, DEFAULT_SETTINGS, TOY_PROJECT_DATA } from './constants';
 import { ProjectSettings, CharacterBible, SceneData, FullProjectData } from './types';
-import { Film, Download, Trash2, Plus } from 'lucide-react';
+import { Film, Download, Trash2, Plus, Send } from 'lucide-react';
 
 const App: React.FC = () => {
   const [settings, setSettings] = useState<ProjectSettings>(DEFAULT_SETTINGS);
@@ -24,6 +23,7 @@ const App: React.FC = () => {
 
   const [regeneratingIds, setRegeneratingIds] = useState<Set<string>>(new Set());
   const [showExport, setShowExport] = useState(false);
+  const [pushAllStatus, setPushAllStatus] = useState<'idle' | 'sent'>('idle');
 
   const handleSuggestTitle = async () => {
     setLoadingSuggestions(prev => ({ ...prev, title: true }));
@@ -140,6 +140,55 @@ const App: React.FC = () => {
     setScenes(data.scenes);
   };
 
+  const handlePushAllToExtension = () => {
+    if (scenes.length === 0) {
+        alert("No scenes to push!");
+        return;
+    }
+
+    // Combine all scenes into a single text block
+    // CRITICAL: Each prompt must be on a SINGLE LINE for the extension to parse it correctly (since it splits by \n).
+    // We construct the prompt exactly as seen in SceneCard, then replace newlines with " | ".
+    const allPrompts = scenes.map(scene => {
+        const bibleText = bible.english; // Default to English for automation
+        const descriptionText = scene.descriptionEn;
+        
+        // Match the structure in SceneCard.tsx
+        const rawPrompt = `${bibleText.trim()}
+
+${descriptionText.trim()}
+${scene.dialogue ? `Dialogue: "${scene.dialogue}"` : ''}
+Camera: ${scene.camera}
+Lighting: ${scene.lighting}
+Transition: ${scene.transition || 'Cut To'}
+Ratio: ${settings.ratio}`;
+        
+        // Flatten logic: Replace newlines with " | "
+        return rawPrompt.replace(/\n+/g, " | ").trim();
+    }).join('\n'); // Join scenes with newline so Extension sees them as separate list items
+
+    const payload = {
+        source: 'VEO3_ARCHITECT',
+        type: 'VEO3_PUSH_ALL', // Matches receiver listener
+        type_alt: 'VEO3_DATA_PUSH', // Backup type
+        timestamp: Date.now(),
+        data: {
+            prompts: allPrompts,
+            count: scenes.length
+        }
+    };
+
+    // Send via both PostMessage and CustomEvent to ensure maximum compatibility
+    window.postMessage(payload, "*");
+    
+    // Also dispatch custom event in case extension is listening to DOM
+    const event = new CustomEvent('VEO3_PROMPT_READY', { detail: payload });
+    document.dispatchEvent(event);
+
+    setPushAllStatus('sent');
+    setTimeout(() => setPushAllStatus('idle'), 3000);
+  };
+
   const fullData: FullProjectData = {
     settings,
     characterBible: bible,
@@ -156,13 +205,23 @@ const App: React.FC = () => {
               <Film className="w-8 h-8 text-cinema-500" />
               <span className="text-xl font-bold tracking-tight text-white">VEO 3 <span className="text-cinema-500">Architect</span></span>
             </div>
-            <button
-              onClick={() => setShowExport(true)}
-              className="flex items-center space-x-2 text-sm font-medium text-slate-300 hover:text-white bg-cinema-800 hover:bg-cinema-700 px-3 py-1.5 rounded-lg transition"
-            >
-              <Download className="w-4 h-4" />
-              <span>Import / Export</span>
-            </button>
+            <div className="flex items-center space-x-2">
+                <button
+                onClick={handlePushAllToExtension}
+                className={`flex items-center space-x-2 text-sm font-medium px-3 py-1.5 rounded-lg transition border ${pushAllStatus === 'sent' ? 'bg-green-600 border-green-500 text-white' : 'text-cinema-400 border-cinema-500 hover:text-white hover:bg-cinema-800'}`}
+                title="Send all scenes to Auto Veo3 Extension"
+                >
+                    <Send className="w-4 h-4" />
+                    <span>{pushAllStatus === 'sent' ? 'Sent All!' : 'Push All to Ext'}</span>
+                </button>
+                <button
+                onClick={() => setShowExport(true)}
+                className="flex items-center space-x-2 text-sm font-medium text-slate-300 hover:text-white bg-cinema-800 hover:bg-cinema-700 px-3 py-1.5 rounded-lg transition"
+                >
+                <Download className="w-4 h-4" />
+                <span>Import / Export</span>
+                </button>
+            </div>
           </div>
         </div>
       </nav>

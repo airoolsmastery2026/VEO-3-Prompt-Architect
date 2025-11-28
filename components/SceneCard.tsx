@@ -64,7 +64,7 @@ export const SceneCard: React.FC<SceneCardProps> = ({
   // Lighting: ...
   // Transition: ...
   // Ratio: ...
-  const fullPrompt = `${bibleText.trim()}
+  const fullPromptRaw = `${bibleText.trim()}
 
 ${descriptionText.trim()}
 ${localScene.dialogue ? `Dialogue: "${localScene.dialogue}"` : ''}
@@ -74,6 +74,11 @@ Transition: ${localScene.transition || 'Cut To'}
 Ratio: ${ratio}`;
 
   const handlePushToExtension = () => {
+    // IMPORTANT: The Extension splits prompts by newline (\n).
+    // We MUST flatten the prompt into a single line for it to be treated as ONE prompt.
+    // We replace newlines with " | " to maintain readability for the AI model.
+    const flattenedPrompt = fullPromptRaw.replace(/\n+/g, " | ").trim();
+
     const payload = {
         source: 'VEO3_ARCHITECT',
         type: 'VEO3_DATA_PUSH',
@@ -82,7 +87,7 @@ Ratio: ${ratio}`;
             sceneId: scene.id,
             sceneNumber: scene.number,
             language: activeTab,
-            prompt: fullPrompt,
+            prompt: flattenedPrompt, // Send flattened version
             ratio: ratio,
             rawScene: localScene
         }
@@ -99,7 +104,7 @@ Ratio: ${ratio}`;
     setPushStatus('sent');
     setTimeout(() => setPushStatus('idle'), 2000);
     
-    console.log("VEO 3 Data Pushed:", payload);
+    console.log("VEO 3 Data Pushed (Flattened):", flattenedPrompt);
   };
 
   return (
@@ -264,13 +269,13 @@ Ratio: ${ratio}`;
                     <button 
                         onClick={handlePushToExtension}
                         className={`flex items-center space-x-1 text-[10px] px-2 py-1 rounded transition border ${pushStatus === 'sent' ? 'bg-green-600 border-green-500 text-white' : 'bg-transparent border-cinema-600 text-cinema-400 hover:text-white hover:border-cinema-400'}`}
-                        title="Push Prompt to Browser Extension"
+                        title="Push formatted prompt to Auto Veo3 Extension"
                     >
                         {pushStatus === 'sent' ? <CheckCircle2 className="w-3 h-3" /> : <Send className="w-3 h-3" />}
                         <span>{pushStatus === 'sent' ? 'Sent!' : 'Push to Ext'}</span>
                     </button>
                     <button 
-                        onClick={() => copyToClipboard(fullPrompt)}
+                        onClick={() => copyToClipboard(fullPromptRaw)}
                         className="flex items-center space-x-1 text-[10px] bg-cinema-700 hover:bg-cinema-600 text-white px-2 py-1 rounded transition"
                     >
                         <Copy className="w-3 h-3" />
@@ -281,7 +286,7 @@ Ratio: ${ratio}`;
             <div className="relative group">
                 <textarea 
                     readOnly
-                    value={fullPrompt}
+                    value={fullPromptRaw}
                     className="w-full bg-black/40 border border-cinema-700/50 rounded p-2 text-[10px] font-mono text-slate-400 h-24 resize-none outline-none"
                 />
             </div>
